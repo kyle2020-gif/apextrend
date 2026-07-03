@@ -148,11 +148,12 @@ const dashboardTimeline = document.querySelector("#dashboard-timeline");
 const dashboardEmptyState = document.querySelector("#dashboard-empty-state");
 
 const APEXTREND_VERSION = "Developer Preview 7D";
-const BACKEND_HEALTH_URL = "http://127.0.0.1:8787/api/health";
-const DERIV_OAUTH_START_URL = "http://127.0.0.1:8787/api/deriv/oauth/start";
-const DERIV_ACCOUNTS_URL = "http://127.0.0.1:8787/api/deriv/accounts";
-const DERIV_CONNECTION_STATUS_URL = "http://127.0.0.1:8787/api/deriv/connection-status";
-const DERIV_OTP_BASE_URL = "http://127.0.0.1:8787/api/deriv/options/accounts";
+const BACKEND_API_BASE_URL = "https://api.joinapextrend.online";
+const BACKEND_HEALTH_URL = `${BACKEND_API_BASE_URL}/api/health`;
+const DERIV_OAUTH_START_URL = `${BACKEND_API_BASE_URL}/api/deriv/oauth/start`;
+const DERIV_ACCOUNTS_URL = `${BACKEND_API_BASE_URL}/api/deriv/accounts`;
+const DERIV_CONNECTION_STATUS_URL = `${BACKEND_API_BASE_URL}/api/deriv/connection-status`;
+const DERIV_OTP_BASE_URL = `${BACKEND_API_BASE_URL}/api/deriv/options/accounts`;
 const PROTECTED_SCREENS = new Set(["connect", "dashboard", "risk", "validation", "activity"]);
 
 let volatilitySymbols = [];

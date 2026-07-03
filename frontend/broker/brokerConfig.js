@@ -9,7 +9,7 @@
         readOnlyConnector: true,
         oauth: {
           client_id: "YOUR_DERIV_CLIENT_ID",
-          redirect_uri: "http://127.0.0.1:8787/api/deriv/oauth/callback",
+          redirect_uri: "https://api.joinapextrend.online/api/deriv/oauth/callback",
           scope: "trade",
           auth_url: "https://auth.deriv.com/oauth2/auth",
           token_url: "https://auth.deriv.com/oauth2/token",
