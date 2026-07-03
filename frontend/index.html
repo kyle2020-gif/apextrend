@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApexTrend</title>
+  <script>
+    document.documentElement.dataset.theme = window.localStorage.getItem("apextrend_theme") || "light";
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand-button" type="button" data-screen="login" aria-label="Go to login">
+        <span class="brand-mark">A</span>
+        <span class="brand-copy">
+          <span>ApexTrend</span>
+          <small>Observe. Analyze. Execute.</small>
+        </span>
+      </button>
+
+      <nav class="nav" aria-label="Prototype navigation">
+        <button type="button" data-screen="login">Login</button>
+        <button type="button" data-screen="connect">Connect</button>
+        <button type="button" data-screen="dashboard">Data</button>
+        <button type="button" data-screen="risk">Risk</button>
+        <button type="button" data-screen="validation">Validation</button>
+        <button type="button" data-screen="activity">Log</button>
+      </nav>
+
+      <div class="topbar-actions">
+        <div class="backend-status" id="backend-status" data-status="checking" aria-label="Backend connection status">
+          <span>Backend</span>
+          <strong id="backend-status-label">Checking...</strong>
+        </div>
+
+        <div class="sync-status" id="sync-status" data-status="offline" aria-label="Cloud sync status">
+          <span>Cloud</span>
+          <strong id="sync-status-label">Offline</strong>
+        </div>
+
+        <div class="broker-status" id="broker-status" data-status="offline" aria-label="Broker gateway status">
+          <span>Broker</span>
+          <strong id="broker-status-label">Deriv / Offline</strong>
+        </div>
+
+        <div class="account-menu hidden" id="account-menu">
+          <span id="auth-user-email">-</span>
+          <button class="secondary-action small" type="button" id="logout-button">Logout</button>
+        </div>
+
+        <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Switch to dark mode">
+          <span class="theme-toggle-track" aria-hidden="true">
+            <span class="theme-toggle-thumb"></span>
+          </span>
+          <span id="theme-toggle-label">Light</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="screen active" id="login" aria-labelledby="login-title">
+        <div class="auth-panel">
+          <div class="intro">
+            <span class="label">Minimal trading intelligence</span>
+            <h1 id="login-title">Welcome back</h1>
+            <p id="auth-mode-copy">Observe. Analyze. Execute.</p>
+          </div>
+
+          <form class="form" id="auth-form">
+            <div class="signup-only-field hidden" id="full-name-field">
+              <label for="full-name">Full name</label>
+              <input id="full-name" type="text" placeholder="Your full name" autocomplete="name" />
+            </div>
+
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter password" autocomplete="current-password" />
+
+            <div class="confirm-password-field hidden" id="confirm-password-field">
+              <label for="confirm-password">Confirm password</label>
+              <input id="confirm-password" type="password" placeholder="Confirm password" autocomplete="new-password" />
+            </div>
+
+            <label class="terms-check hidden" id="terms-check">
+              <input id="terms-checkbox" type="checkbox" />
+              <span>I agree to the ApexTrend Terms and Privacy Policy</span>
+            </label>
+
+            <button class="primary-action" type="submit" id="auth-submit-button">Sign In</button>
+
+            <div class="auth-link-row">
+              <button type="button" id="show-signup-button">Create an ApexTrend account</button>
+              <button type="button" id="forgot-password-button">Forgot password</button>
+            </div>
+
+            <p class="scanner-message" id="auth-message">Login to ApexTrend before linking Deriv.</p>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen" id="connect" aria-labelledby="connect-title">
+        <div class="content-panel compact">
+          <span class="label">Account setup</span>
+          <h2 id="connect-title">Connect your Deriv account</h2>
+          <p class="security-note">Link your Deriv account securely through Deriv.</p>
+
+          <div class="button-stack">
+            <button class="primary-action" type="button" id="deriv-oauth-button">Link Your Deriv Account</button>
+          </div>
+
+          <p class="security-note">ApexTrend never sees or stores your Deriv password. Demo execution remains available only after scanner, deployment, and risk checks approve.</p>
+
+          <div class="content-panel broker-account-panel hidden" id="deriv-account-panel">
+            <div class="section-heading">
+              <span class="label">Deriv OAuth</span>
+              <h2>Linked Accounts</h2>
+            </div>
+            <p class="scanner-message" id="deriv-oauth-status">Deriv is not linked yet.</p>
+            <label for="deriv-account-select">Demo options account</label>
+            <select id="deriv-account-select"></select>
+            <button class="secondary-action" type="button" id="deriv-demo-otp-button">Prepare Demo WebSocket</button>
+          </div>
+
+          <details class="developer-connection">
+            <summary>Developer connection</summary>
+            <p class="warning-note">Legacy developer mode - not for production. Manual tokens are stored in browser localStorage and are not production-safe.</p>
+            <form class="form token-form" id="deriv-connect-form">
+              <label for="deriv-token">Deriv API token</label>
+              <input id="deriv-token" type="password" placeholder="Paste development API token" autocomplete="off" />
+              <button class="secondary-action" type="submit">Connect with Developer Token</button>
+            </form>
+          </details>
+        </div>
+      </section>
+
+      <section class="screen" id="dashboard" aria-labelledby="dashboard-title">
+        <div class="personal-dashboard">
+          <section class="command-card welcome-card" aria-labelledby="welcome-title">
+            <div>
+              <span class="label">Command centre</span>
+              <h1 id="welcome-title"><span id="welcome-greeting">Good Day</span>, <span id="welcome-name">Trader</span></h1>
+              <p>ApexTrend watches quietly and surfaces only high-confidence opportunities.</p>
+            </div>
+            <div class="welcome-meta">
+              <div><span>Version</span><strong id="dashboard-version">-</strong></div>
+              <div><span>Account</span><strong id="dashboard-account">-</strong></div>
+              <div><span>Backend</span><strong id="dashboard-backend-status">-</strong></div>
+              <div><span>Cloud Sync</span><strong id="dashboard-cloud-status">-</strong></div>
+              <div><span>Broker</span><strong id="dashboard-broker-status">Deriv</strong></div>
+              <div><span>Connection</span><strong id="dashboard-broker-connection">Offline</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card" aria-labelledby="scanner-card-title">
+            <div class="section-heading">
+              <span class="label">Scanner</span>
+              <h2 id="scanner-card-title">Scanner Status</h2>
+            </div>
+            <div class="command-metrics">
+              <div><span>Status</span><strong id="dash-scanner-state">Idle</strong></div>
+              <div><span>Markets scanned</span><strong id="dash-markets-scanned">0</strong></div>
+              <div><span>Markets connected</span><strong id="dash-markets-connected">0</strong></div>
+              <div><span>Uptime</span><strong id="dash-scanner-uptime">0m</strong></div>
+              <div><span>Last scan</span><strong id="dash-last-scan">-</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card" aria-labelledby="summary-title">
+            <div class="section-heading">
+              <span class="label">Today</span>
+              <h2 id="summary-title">Today's Summary</h2>
+            </div>
+            <div class="command-metrics">
+              <div><span>Signals detected</span><strong id="dash-signals-today">0</strong></div>
+              <div><span>Deployments approved</span><strong id="dash-deployments-approved">0</strong></div>
+              <div><span>Bot approvals</span><strong id="dash-bot-approvals">0</strong></div>
+              <div><span>Bot rejections</span><strong id="dash-bot-rejections">0</strong></div>
+              <div><span>Contracts completed</span><strong id="dash-contracts-completed">0</strong></div>
+              <div><span>Win/Loss</span><strong id="dash-win-loss">0 / 0</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card" aria-labelledby="dash-active-bot-title">
+            <div class="section-heading">
+              <span class="label">Active strategy</span>
+              <h2 id="dash-active-bot-title">Active Bot</h2>
+            </div>
+            <div class="command-metrics">
+              <div><span>Bot</span><strong id="dash-active-bot">None</strong></div>
+              <div><span>Market</span><strong id="dash-active-market">-</strong></div>
+              <div><span>Confidence</span><strong id="dash-active-confidence">-</strong></div>
+              <div><span>Contract status</span><strong id="dash-contract-state">-</strong></div>
+              <div><span>Barrier</span><strong id="dash-active-barrier">-</strong></div>
+              <div><span>Duration</span><strong id="dash-active-duration">-</strong></div>
+              <div><span>Stake</span><strong id="dash-active-stake">-</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card" aria-labelledby="dash-risk-title">
+            <div class="section-heading">
+              <span class="label">Protection</span>
+              <h2 id="dash-risk-title">Risk Status</h2>
+            </div>
+            <div class="command-metrics">
+              <div><span>Risk %</span><strong id="dash-risk-percent">3%</strong></div>
+              <div><span>Daily trades</span><strong id="dash-daily-trades">0</strong></div>
+              <div><span>Open contracts</span><strong id="dash-open-contracts">0</strong></div>
+              <div><span>Profit target</span><strong id="dash-profit-target">0</strong></div>
+              <div><span>Loss limit</span><strong id="dash-loss-limit">0</strong></div>
+              <div><span>Overall status</span><strong id="dash-risk-status">Safe</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card" aria-labelledby="dash-analytics-title">
+            <div class="section-heading">
+              <span class="label">Analytics</span>
+              <h2 id="dash-analytics-title">Scanner Analytics</h2>
+            </div>
+            <div class="command-metrics">
+              <div><span>Markets monitored</span><strong id="dash-markets-monitored">0</strong></div>
+              <div><span>Signals today</span><strong id="dash-analytics-signals">0</strong></div>
+              <div><span>Average confidence</span><strong id="dash-average-confidence">0%</strong></div>
+              <div><span>Avg response</span><strong id="dash-average-response">0ms</strong></div>
+              <div><span>Availability</span><strong id="dash-scanner-availability">Idle</strong></div>
+            </div>
+          </section>
+
+          <section class="command-card quick-actions-card" aria-labelledby="quick-actions-title">
+            <div class="section-heading">
+              <span class="label">Actions</span>
+              <h2 id="quick-actions-title">Quick Actions</h2>
+            </div>
+            <div class="quick-action-grid">
+              <button class="secondary-action" type="button" id="quick-connect-button">Connect Deriv</button>
+              <button class="primary-action" type="button" id="quick-start-scanner-button">Start Scanner</button>
+              <button class="danger-action" type="button" id="quick-stop-scanner-button">Stop Scanner</button>
+              <button class="secondary-action" type="button" id="quick-risk-button">Risk Settings</button>
+              <button class="secondary-action" type="button" id="quick-activity-button">View Activity</button>
+            </div>
+          </section>
+
+          <section class="command-card activity-card" aria-labelledby="dash-activity-title">
+            <div class="section-heading">
+              <span class="label">Timeline</span>
+              <h2 id="dash-activity-title">Activity Timeline</h2>
+            </div>
+            <ol class="dashboard-timeline" id="dashboard-timeline">
+              <li class="timeline-empty">No activity yet.</li>
+            </ol>
+          </section>
+
+          <section class="command-card empty-signal-card" id="dashboard-empty-state">
+            <p>Scanner is monitoring the markets.</p>
+            <strong>You will only be notified when a high-confidence opportunity is detected.</strong>
+          </section>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="content-panel scanner-panel">
+            <div class="status-row">
+              <span class="live-dot inactive" id="connection-dot" aria-hidden="true"></span>
+              <h2 id="dashboard-title">Deriv Data Connector</h2>
+            </div>
+
+            <div class="metrics">
+              <div>
+                <span>Status</span>
+                <strong id="connection-status">Disconnected</strong>
+              </div>
+              <div>
+                <span>Account type</span>
+                <strong id="account-type">-</strong>
+              </div>
+              <div>
+                <span>Login ID</span>
+                <strong id="login-id">-</strong>
+              </div>
+              <div>
+                <span>Currency</span>
+                <strong id="account-currency">-</strong>
+              </div>
+              <div>
+                <span>Balance</span>
+                <strong id="account-balance">0.00</strong>
+              </div>
+            </div>
+
+            <p class="scanner-message" id="connector-message">Connect a Deriv account to fetch supported Volatility Indices and run the read-only scanner.</p>
+            <p class="scanner-message" id="scanner-status">Scanner idle.</p>
+
+            <div class="opportunity-card hidden" id="opportunity-card" aria-live="polite">
+              <span class="label light">Opportunity Detected</span>
+              <dl class="opportunity-list">
+                <div>
+                  <dt>Market</dt>
+                  <dd id="opportunity-market">-</dd>
+                </div>
+                <div>
+                  <dt>Recommendation</dt>
+                  <dd id="opportunity-recommendation">-</dd>
+                </div>
+                <div>
+                  <dt>Confidence</dt>
+                  <dd id="opportunity-confidence">-</dd>
+                </div>
+                <div>
+                  <dt>Trend strength</dt>
+                  <dd id="opportunity-trend-strength">-</dd>
+                </div>
+                <div>
+                  <dt>Momentum</dt>
+                  <dd id="opportunity-momentum">-</dd>
+                </div>
+                <div>
+                  <dt>Recommended bot</dt>
+                  <dd id="opportunity-bot">-</dd>
+                </div>
+              </dl>
+              <div class="action-row">
+                <button class="deploy-action" type="button" id="deploy-signal-button">Deploy</button>
+                <button class="ignore-action" type="button" id="ignore-signal-button">Ignore</button>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button class="secondary-action" type="button" id="refresh-symbols-button">Refresh Symbols</button>
+              <button class="danger-action" type="button" id="disconnect-button">Disconnect</button>
+              <button class="secondary-action" type="button" data-screen="connect">Settings</button>
+            </div>
+          </div>
+
+          <aside class="content-panel side-panel">
+            <span class="label">Scanner mode</span>
+            <p>Phase 4 keeps deployment semi-automatic. The scanner can recommend a bot, but the user must click Deploy to arm it.</p>
+            <button class="primary-action" type="button" id="subscribe-all-button">Scan All Markets</button>
+          </aside>
+        </div>
+
+        <div class="content-panel dev-test-panel" aria-labelledby="dev-test-title">
+          <div class="section-heading">
+            <span class="label">Development Test Mode</span>
+            <h2 id="dev-test-title">Mock Signal Tester</h2>
+          </div>
+          <p class="security-note">Development only. Mock signals use the existing scanner validation, deployment, risk, and demo execution flow.</p>
+          <div class="dev-test-actions" id="mock-signal-actions">
+            <button class="secondary-action" type="button" data-mock-signal="DEPLOY UPTREND">Deploy Uptrend</button>
+            <button class="secondary-action" type="button" data-mock-signal="DEPLOY DOWNTREND">Deploy Downtrend</button>
+            <button class="secondary-action" type="button" data-mock-signal="WATCH">Watch</button>
+            <button class="secondary-action" type="button" data-mock-signal="STOP">Stop</button>
+            <button class="secondary-action" type="button" data-mock-signal="WAIT">Rejected</button>
+          </div>
+          <div class="dev-test-actions" id="execution-test-actions" aria-label="Demo execution test controls">
+            <button class="secondary-action" type="button" data-execution-test="proposal-success">Proposal success</button>
+            <button class="secondary-action" type="button" data-execution-test="proposal-failure">Proposal failure</button>
+            <button class="secondary-action" type="button" data-execution-test="win">Win</button>
+            <button class="secondary-action" type="button" data-execution-test="loss">Loss</button>
+            <button class="secondary-action" type="button" data-execution-test="timeout">Timeout</button>
+          </div>
+          <div class="dev-test-actions" id="bot-test-actions" aria-label="Bot intelligence test controls">
+            <button class="secondary-action" type="button" data-bot-test="uptrend-approve">Uptrend bot approve</button>
+            <button class="secondary-action" type="button" data-bot-test="uptrend-reject">Uptrend bot reject</button>
+            <button class="secondary-action" type="button" data-bot-test="downtrend-approve">Downtrend bot approve</button>
+            <button class="secondary-action" type="button" data-bot-test="downtrend-reject">Downtrend bot reject</button>
+            <button class="secondary-action" type="button" data-bot-test="consolidation-approve">Consolidation bot approve</button>
+            <button class="secondary-action" type="button" data-bot-test="consolidation-reject">Consolidation bot reject</button>
+          </div>
+          <div class="dev-test-actions" id="dashboard-test-actions" aria-label="Dashboard display test controls">
+            <button class="secondary-action" type="button" data-dashboard-test="active-bot-sample">Show active bot sample</button>
+            <button class="secondary-action" type="button" data-dashboard-test="clear-active-bot-sample">Clear active bot sample</button>
+          </div>
+        </div>
+
+        <div class="content-panel active-bot-panel hidden" id="active-bot-panel">
+          <div class="section-heading">
+            <span class="label">Semi-automatic mode</span>
+            <h2>Active Bot</h2>
+          </div>
+
+          <div class="bot-grid">
+            <div>
+              <span>Market</span>
+              <strong id="active-bot-market">-</strong>
+            </div>
+            <div>
+              <span>Bot type</span>
+              <strong id="active-bot-type">-</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong id="active-bot-status">-</strong>
+            </div>
+            <div>
+              <span>Current balance</span>
+              <strong id="active-bot-balance">0.00</strong>
+            </div>
+            <div>
+              <span>Open trades</span>
+              <strong id="active-bot-open-trades">0</strong>
+            </div>
+            <div>
+              <span>Last signal confidence</span>
+              <strong id="active-bot-confidence">-</strong>
+            </div>
+            <div>
+              <span>Direction</span>
+              <strong id="active-bot-direction">-</strong>
+            </div>
+            <div>
+              <span>Bot verification</span>
+              <strong id="active-bot-verification">-</strong>
+            </div>
+            <div>
+              <span>Barrier direction</span>
+              <strong id="active-bot-barrier-direction">-</strong>
+            </div>
+            <div>
+              <span>Duration</span>
+              <strong id="active-bot-duration">-</strong>
+            </div>
+            <div>
+              <span>Stake</span>
+              <strong id="active-bot-stake">-</strong>
+            </div>
+          </div>
+
+          <p class="scanner-message" id="deployment-status">No bot armed.</p>
+          <div class="action-row">
+            <button class="danger-action" type="button" id="stop-bot-button">Stop Bot</button>
+          </div>
+        </div>
+
+        <div class="content-panel contract-panel hidden" id="contract-panel">
+          <div class="section-heading">
+            <span class="label">Demo execution</span>
+            <h2>Contract</h2>
+          </div>
+
+          <div class="bot-grid">
+            <div>
+              <span>Market</span>
+              <strong id="contract-market">-</strong>
+            </div>
+            <div>
+              <span>Strategy</span>
+              <strong id="contract-strategy">-</strong>
+            </div>
+            <div>
+              <span>Barrier</span>
+              <strong id="contract-barrier">-</strong>
+            </div>
+            <div>
+              <span>Stake</span>
+              <strong id="contract-stake">-</strong>
+            </div>
+            <div>
+              <span>Duration</span>
+              <strong id="contract-duration">-</strong>
+            </div>
+            <div>
+              <span>Current status</span>
+              <strong id="contract-status">-</strong>
+            </div>
+            <div>
+              <span>Time remaining</span>
+              <strong id="contract-time-remaining">-</strong>
+            </div>
+            <div>
+              <span>Profit/Loss</span>
+              <strong id="contract-profit-loss">0.00</strong>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="danger-action" type="button" id="cancel-execution-button">Cancel Execution</button>
+          </div>
+        </div>
+
+        <div class="content-panel risk-status-panel">
+          <div class="section-heading">
+            <span class="label">Risk controls</span>
+            <h2>Risk Status</h2>
+          </div>
+          <div class="bot-grid">
+            <div>
+              <span>Balance</span>
+              <strong id="risk-balance">0.00</strong>
+            </div>
+            <div>
+              <span>Calculated stake</span>
+              <strong id="risk-stake">0.00</strong>
+            </div>
+            <div>
+              <span>Trades today</span>
+              <strong id="risk-trades-today">0</strong>
+            </div>
+            <div>
+              <span>Consecutive losses</span>
+              <strong id="risk-consecutive-losses">0</strong>
+            </div>
+            <div>
+              <span>Daily P/L</span>
+              <strong id="risk-daily-pl">0.00</strong>
+            </div>
+            <div>
+              <span>Current risk status</span>
+              <strong id="risk-current-status">Safe</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-panel market-panel">
+          <div class="section-heading">
+            <span class="label">Supported markets</span>
+            <h2>Volatility Indices</h2>
+          </div>
+          <div class="market-list" id="volatility-list">
+            <p class="empty-state">No volatility indices loaded yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="risk" aria-labelledby="risk-title">
+        <div class="content-panel">
+          <div class="section-heading">
+            <span class="label">Responsible trading</span>
+            <h2 id="risk-title">Risk Settings</h2>
+            <p class="security-note">These controls prepare ApexTrend for demo execution checks. Real account execution remains disabled.</p>
+          </div>
+
+          <form class="risk-form" id="risk-settings-form">
+            <label for="risk-per-trade">Risk per trade %</label>
+            <input id="risk-per-trade" type="number" min="1" max="6" step="0.5" value="3" />
+
+            <label for="daily-profit-target">Daily profit target</label>
+            <input id="daily-profit-target" type="number" min="0" step="1" value="25" />
+
+            <label for="daily-loss-limit">Daily loss limit</label>
+            <input id="daily-loss-limit" type="number" min="0" step="1" value="10" />
+
+            <label for="max-consecutive-losses">Max consecutive losses</label>
+            <input id="max-consecutive-losses" type="number" min="1" step="1" value="3" />
+
+            <label for="max-trades-day">Max trades per day</label>
+            <input id="max-trades-day" type="number" min="1" step="1" value="5" />
+
+            <label for="max-open-trades">Max open trades</label>
+            <input id="max-open-trades" type="number" min="1" step="1" value="1" />
+
+            <label for="execution-mode">Execution mode</label>
+            <select id="execution-mode">
+              <option value="demo">Demo only</option>
+              <option value="real-disabled">Real disabled</option>
+            </select>
+
+            <label for="scanner-sensitivity">Scanner sensitivity</label>
+            <select id="scanner-sensitivity">
+              <option value="conservative">Conservative</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+
+            <button class="primary-action" type="submit">Save Risk Settings</button>
+          </form>
+
+          <p class="warning-note hidden" id="real-account-warning">Real trading is disabled in this version.</p>
+          <p class="scanner-message" id="risk-settings-message">Default risk per trade is 3%. Allowed range is 1% to 6%.</p>
+        </div>
+      </section>
+
+      <section class="screen" id="validation" aria-labelledby="validation-title">
+        <div class="content-panel">
+          <div class="section-heading">
+            <span class="label">Development only</span>
+            <h2 id="validation-title">Scanner Validation</h2>
+            <p class="security-note">Review the last 50 scanner recommendations and rejected opportunities against the live Deriv chart. This panel does not place trades.</p>
+          </div>
+
+          <div class="filter-row" aria-label="Validation filters">
+            <button class="filter-button active" type="button" data-validation-filter="all">All</button>
+            <button class="filter-button" type="button" data-validation-filter="deploy">Deploy signals</button>
+            <button class="filter-button" type="button" data-validation-filter="watch">Watch signals</button>
+            <button class="filter-button" type="button" data-validation-filter="stop">Stop signals</button>
+            <button class="filter-button" type="button" data-validation-filter="rejected">Rejected signals</button>
+          </div>
+
+          <div class="validation-list" id="validation-list">
+            <p class="empty-state">No scanner validation records yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="activity" aria-labelledby="activity-title">
+        <div class="content-panel">
+          <div class="section-heading">
+            <span class="label">Scanner history</span>
+            <h2 id="activity-title">Activity Log</h2>
+          </div>
+
+          <ol class="activity-list" id="activity-list">
+            <li><time>09:15</time><span>Prototype opened</span></li>
+            <li><time>09:16</time><span>Deriv connector ready</span></li>
+            <li><time>09:17</time><span>Awaiting API token</span></li>
+            <li><time>09:18</time><span>Scanner engine ready</span></li>
+          </ol>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="settings.js"></script>
+  <script src="deriv.js"></script>
+  <script src="broker/brokerAdapter.js"></script>
+  <script src="broker/brokerConfig.js"></script>
+  <script src="broker/derivAdapter.js"></script>
+  <script src="broker/brokerManager.js"></script>
+  <script src="scanner.js"></script>
+  <script src="bots.js"></script>
+  <script src="deployment.js"></script>
+  <script src="risk.js"></script>
+  <script src="execution.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

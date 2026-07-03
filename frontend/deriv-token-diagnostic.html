@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deriv Token Diagnostic</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --card: #f7f8fa;
+      --line: #e3e7ee;
+      --text: #15171a;
+      --muted: #687385;
+      --primary: #ff444f;
+      --success: #1f9d63;
+      --danger: #d92d38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    main {
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    section {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin-top: 22px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 8px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font: inherit;
+    }
+
+    button {
+      min-height: 46px;
+      margin-top: 16px;
+      padding: 0 18px;
+      border: 1px solid var(--primary);
+      border-radius: 999px;
+      color: #ffffff;
+      background: var(--primary);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    dl {
+      display: grid;
+      gap: 0;
+      margin: 24px 0 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    div.row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    div.row:last-child {
+      border-bottom: 0;
+    }
+
+    dt {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    dd {
+      margin: 0;
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .pass {
+      color: var(--success);
+    }
+
+    .fail {
+      color: var(--danger);
+    }
+
+    pre {
+      min-height: 160px;
+      margin-top: 18px;
+      padding: 16px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #111418;
+      color: #f7f8fa;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Deriv Token Diagnostic</h1>
+      <p>This standalone page only tests Deriv token authorization and balance. It does not store the token, request proposals, buy contracts, or use ApexTrend trading modules.</p>
+
+      <form id="diagnostic-form">
+        <label for="token">Deriv API token</label>
+        <input id="token" type="password" placeholder="Paste token for this test only" autocomplete="off" />
+        <button id="run-button" type="submit">Run Diagnostic</button>
+      </form>
+
+      <dl aria-label="Diagnostic result">
+        <div class="row">
+          <dt>Authorized</dt>
+          <dd id="authorized">No test run</dd>
+        </div>
+        <div class="row">
+          <dt>Login ID</dt>
+          <dd id="loginid">-</dd>
+        </div>
+        <div class="row">
+          <dt>Account type</dt>
+          <dd id="account-type">-</dd>
+        </div>
+        <div class="row">
+          <dt>Currency</dt>
+          <dd id="currency">-</dd>
+        </div>
+        <div class="row">
+          <dt>Balance</dt>
+          <dd id="balance">-</dd>
+        </div>
+        <div class="row">
+          <dt>Error</dt>
+          <dd id="error">-</dd>
+        </div>
+      </dl>
+
+      <pre id="raw-log">Raw Deriv responses will appear here.</pre>
+    </section>
+  </main>
+
+  <script src="deriv-token-diagnostic.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "apextrend-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "file:vendor/supabase-js",
+    "cors": "file:vendor/cors",
+    "dotenv": "file:vendor/dotenv",
+    "express": "file:vendor/express",
+    "helmet": "file:vendor/helmet"
+  }
+}

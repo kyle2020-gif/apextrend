@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Logs and runtime output
+*.log
+server/backend*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Codex/local generated work areas
+.agents/
+.codex/
+outputs/
+work/
+
+# Accidental nested repo scaffolding
+server/ApexTrend/
