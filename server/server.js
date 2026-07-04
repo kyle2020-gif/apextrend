@@ -13,7 +13,7 @@ const port = Number(env.PORT || 8787);
 const frontendOrigin = env.FRONTEND_ORIGIN || "http://127.0.0.1:4173";
 const derivClientId = env.DERIV_CLIENT_ID || env.DERIV_APP_ID || "YOUR_DERIV_CLIENT_ID";
 const derivRedirectUri = env.DERIV_REDIRECT_URI || `http://127.0.0.1:${port}/api/deriv/oauth/callback`;
-const derivAuthUrl = env.DERIV_AUTH_URL || "https://auth.deriv.com/oauth2/auth";
+const derivAuthUrl = env.DERIV_AUTH_URL || "https://auth.deriv.com/oauth2/authorize";
 const derivTokenUrl = env.DERIV_TOKEN_URL || "https://auth.deriv.com/oauth2/token";
 const derivScope = env.DERIV_SCOPE || "trade";
 const derivAccountsUrl = env.DERIV_ACCOUNTS_URL || "https://api.derivws.com/trading/v1/accounts";
@@ -73,6 +73,18 @@ function createPkcePair() {
   const codeVerifier = base64Url(crypto.randomBytes(48));
   const codeChallenge = base64Url(crypto.createHash("sha256").update(codeVerifier).digest());
   return { codeVerifier, codeChallenge };
+}
+
+function buildDerivAuthorizationUrl({ state, codeChallenge }) {
+  const authorizationUrl = new URL(derivAuthUrl);
+  authorizationUrl.searchParams.set("response_type", "code");
+  authorizationUrl.searchParams.set("client_id", derivClientId);
+  authorizationUrl.searchParams.set("redirect_uri", derivRedirectUri);
+  authorizationUrl.searchParams.set("scope", derivScope);
+  authorizationUrl.searchParams.set("state", state);
+  authorizationUrl.searchParams.set("code_challenge", codeChallenge);
+  authorizationUrl.searchParams.set("code_challenge_method", "S256");
+  return authorizationUrl;
 }
 
 function pruneExpiredOauthStates() {
@@ -191,6 +203,25 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", app: "ApexTrend" });
 });
 
+app.get("/api/deriv/oauth/debug", requireApexUser, (_req, res) => {
+  const state = base64Url(crypto.randomBytes(24));
+  const { codeChallenge } = createPkcePair();
+  const authorizationUrl = buildDerivAuthorizationUrl({ state, codeChallenge });
+
+  res.json({
+    configuredAuthUrl: derivAuthUrl,
+    clientIdPresent: Boolean(derivClientId && derivClientId !== "YOUR_DERIV_CLIENT_ID"),
+    redirectUri: derivRedirectUri,
+    scope: derivScope,
+    generatedAuthorizationUrl: authorizationUrl.toString(),
+    pkce: {
+      method: "S256",
+      codeChallengePresent: true,
+      codeVerifierExposed: false,
+    },
+  });
+});
+
 app.get("/api/deriv/oauth/start", requireApexUser, (req, res) => {
   pruneExpiredOauthStates();
   const state = base64Url(crypto.randomBytes(24));
@@ -202,14 +233,7 @@ app.get("/api/deriv/oauth/start", requireApexUser, (req, res) => {
     createdAt: Date.now(),
   });
 
-  const authorizationUrl = new URL(derivAuthUrl);
-  authorizationUrl.searchParams.set("response_type", "code");
-  authorizationUrl.searchParams.set("client_id", derivClientId);
-  authorizationUrl.searchParams.set("redirect_uri", derivRedirectUri);
-  authorizationUrl.searchParams.set("scope", derivScope);
-  authorizationUrl.searchParams.set("state", state);
-  authorizationUrl.searchParams.set("code_challenge", codeChallenge);
-  authorizationUrl.searchParams.set("code_challenge_method", "S256");
+  const authorizationUrl = buildDerivAuthorizationUrl({ state, codeChallenge });
 
   if (req.query.redirect === "1") {
     sendRedirect(res, authorizationUrl.toString());
