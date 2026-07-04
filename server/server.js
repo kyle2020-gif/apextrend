@@ -13,7 +13,9 @@ const port = Number(env.PORT || 8787);
 const frontendOrigin = env.FRONTEND_ORIGIN || "http://127.0.0.1:4173";
 const derivClientId = env.DERIV_CLIENT_ID || env.DERIV_APP_ID || "YOUR_DERIV_CLIENT_ID";
 const derivRedirectUri = env.DERIV_REDIRECT_URI || `http://127.0.0.1:${port}/api/deriv/oauth/callback`;
-const derivAuthUrl = env.DERIV_AUTH_URL || "https://auth.deriv.com/oauth2/authorize";
+const derivAuthUrl = env.DERIV_AUTH_URL || "https://auth.deriv.com/oauth2/auth";
+const derivLegacyAuthUrl = env.DERIV_LEGACY_AUTH_URL || "https://oauth.deriv.com/oauth2/authorize";
+const derivOauthStyle = env.DERIV_OAUTH_STYLE || "pkce_modern";
 const derivTokenUrl = env.DERIV_TOKEN_URL || "https://auth.deriv.com/oauth2/token";
 const derivScope = env.DERIV_SCOPE || "trade";
 const derivAccountsUrl = env.DERIV_ACCOUNTS_URL || "https://api.derivws.com/trading/v1/accounts";
@@ -75,7 +77,13 @@ function createPkcePair() {
   return { codeVerifier, codeChallenge };
 }
 
-function buildDerivAuthorizationUrl({ state, codeChallenge }) {
+function buildDerivAuthorizationUrl({ state, codeChallenge } = {}) {
+  if (derivOauthStyle === "legacy_app_id") {
+    const authorizationUrl = new URL(derivLegacyAuthUrl);
+    authorizationUrl.searchParams.set("app_id", derivClientId);
+    return authorizationUrl;
+  }
+
   const authorizationUrl = new URL(derivAuthUrl);
   authorizationUrl.searchParams.set("response_type", "code");
   authorizationUrl.searchParams.set("client_id", derivClientId);
@@ -209,7 +217,9 @@ app.get("/api/deriv/oauth/debug", requireApexUser, (_req, res) => {
   const authorizationUrl = buildDerivAuthorizationUrl({ state, codeChallenge });
 
   res.json({
+    oauthStyle: derivOauthStyle,
     configuredAuthUrl: derivAuthUrl,
+    configuredLegacyAuthUrl: derivLegacyAuthUrl,
     clientIdPresent: Boolean(derivClientId && derivClientId !== "YOUR_DERIV_CLIENT_ID"),
     redirectUri: derivRedirectUri,
     scope: derivScope,
@@ -223,6 +233,26 @@ app.get("/api/deriv/oauth/debug", requireApexUser, (_req, res) => {
 });
 
 app.get("/api/deriv/oauth/start", requireApexUser, (req, res) => {
+  if (derivOauthStyle === "legacy_app_id") {
+    const authorizationUrl = buildDerivAuthorizationUrl();
+
+    if (req.query.redirect === "1") {
+      sendRedirect(res, authorizationUrl.toString());
+      return;
+    }
+
+    res.json({
+      status: "ok",
+      oauthStyle: derivOauthStyle,
+      authorizationUrl: authorizationUrl.toString(),
+      pkce: {
+        enabled: false,
+        codeVerifierStoredServerSide: false,
+      },
+    });
+    return;
+  }
+
   pruneExpiredOauthStates();
   const state = base64Url(crypto.randomBytes(24));
   const { codeVerifier, codeChallenge } = createPkcePair();
